@@ -444,6 +444,32 @@ a + b <span class="hljs-comment">// "[object Object][object Object]"</span>
         <p>简单来说就是，如果 + 的其中一个操作数是字符串（或者通过以上步骤最终得到字符串），则执行字符串拼接，否则执行数字加法。</p>
         <p>那么对于除了加法的运算符来说，只要其中一方是数字，那么另一方就会被转为数字。</p>
       </el-collapse-item>
+      <el-collapse-item title="20. 为什么会有BigInt的提案？">
+        <p>JavaScript中Number.MAX_SAFE_INTEGER表示最⼤安全数字，计算结果是9007199254740991，即在这个数范围内不会出现精度丢失（⼩数除外）。但是⼀旦超过这个范围，js就会出现计算不准确的情况，这在⼤数计算的时候不得不依靠⼀些第三⽅库进⾏解决，因此官⽅提出了BigInt来解决此问题。</p>
+      </el-collapse-item>
+      <el-collapse-item title="21. object.assign和扩展运算法是深拷贝还是浅拷贝，两者区别">
+        <p>扩展运算符：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">let</span> outObj = {
+  <span class="hljs-attr">inObj</span>: {<span class="hljs-attr">a</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">b</span>: <span class="hljs-number">2</span>}
+}
+<span class="hljs-keyword">let</span> newObj = {...outObj}
+newObj.inObj.a = <span class="hljs-number">2</span>
+<span class="hljs-built_in">console</span>.log(outObj) <span class="hljs-comment">// {inObj: {a: 2, b: 2}}</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>Object.assign():</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">let</span> outObj = {
+  <span class="hljs-attr">inObj</span>: {<span class="hljs-attr">a</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">b</span>: <span class="hljs-number">2</span>}
+}
+<span class="hljs-keyword">let</span> newObj = <span class="hljs-built_in">Object</span>.assign({}, outObj)
+newObj.inObj.a = <span class="hljs-number">2</span>
+<span class="hljs-built_in">console</span>.log(outObj) <span class="hljs-comment">// {inObj: {a: 2, b: 2}}</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>可以看到，两者都是浅拷贝。</p>
+        <ul>
+          <li>Object.assign()方法接收的第一个参数作为目标对象，后面的所有参数作为源对象。然后把所有的源对象合并到目标对象中。它会修改了一个对象，因此会触发 ES6 setter。</li>
+          <li>扩展操作符（…）使用它时，数组或对象中的每一个值都会被拷贝到一个新的数组或对象中。它不复制继承的属性或类的属性，但是它会复制ES6的 symbols 属性。</li>
+        </ul>
+      </el-collapse-item>
     </el-collapse>
   </div>
 </template>

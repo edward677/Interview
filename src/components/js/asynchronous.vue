@@ -488,6 +488,118 @@ doIt();
 }
 <span class="copy-code-btn">复制代码</span></code></pre>
       </el-collapse-item>
+      <el-collapse-item title="12. 并发与并行的区别？">
+        <ul>
+          <li>并发是宏观概念，我分别有任务 A 和任务 B，在一段时间内通过任务间的切换完成了这两个任务，这种情况就可以称之为并发。</li>
+          <li>并行是微观概念，假设 CPU 中存在两个核心，那么我就可以同时完成任务 A、B。同时完成多个任务的情况就可以称之为并行。</li>
+        </ul>
+      </el-collapse-item>
+      <el-collapse-item title="13. 什么是回调函数？回调函数有什么缺点？如何解决回调地狱问题？">
+        <p>以下代码就是一个回调函数的例子：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript">ajax(url, <span class="hljs-function">() =&gt;</span> {
+    <span class="hljs-comment">// 处理逻辑</span>
+})
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>回调函数有一个致命的弱点，就是容易写出回调地狱（Callback hell）。假设多个请求存在依赖性，可能会有如下代码：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript">ajax(url, <span class="hljs-function">() =&gt;</span> {
+    <span class="hljs-comment">// 处理逻辑</span>
+    ajax(url1, <span class="hljs-function">() =&gt;</span> {
+        <span class="hljs-comment">// 处理逻辑</span>
+        ajax(url2, <span class="hljs-function">() =&gt;</span> {
+            <span class="hljs-comment">// 处理逻辑</span>
+        })
+    })
+})
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>以上代码看起来不利于阅读和维护，当然，也可以把函数分开来写：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">firstAjax</span>(<span class="hljs-params"></span>) </span>{
+  ajax(url1, <span class="hljs-function">() =&gt;</span> {
+    <span class="hljs-comment">// 处理逻辑</span>
+    secondAjax()
+  })
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">secondAjax</span>(<span class="hljs-params"></span>) </span>{
+  ajax(url2, <span class="hljs-function">() =&gt;</span> {
+    <span class="hljs-comment">// 处理逻辑</span>
+  })
+}
+ajax(url, <span class="hljs-function">() =&gt;</span> {
+  <span class="hljs-comment">// 处理逻辑</span>
+  firstAjax()
+})
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>以上的代码虽然看上去利于阅读了，但是还是没有解决根本问题。回调地狱的根本问题就是：</p>
+        <ol>
+          <li>嵌套函数存在耦合性，一旦有所改动，就会牵一发而动全身</li>
+          <li>嵌套函数一多，就很难处理错误</li>
+        </ol>
+        <p>当然，回调函数还存在着别的几个缺点，比如不能使用 <code>try catch</code> 捕获错误，不能直接 <code>return</code>。</p>
+      </el-collapse-item>
+      <el-collapse-item title="14. setTimeout、setInterval、requestAnimationFrame 各有什么特点？">
+        <p>异步编程当然少不了定时器了，常见的定时器函数有 <code>setTimeout</code>、<code>setInterval</code>、<code>requestAnimationFrame</code>。最常用的是<code>setTimeout</code>，很多人认为 <code>setTimeout</code> 是延时多久，那就应该是多久后执行。</p>
+        <p>其实这个观点是错误的，因为 JS 是单线程执行的，如果前面的代码影响了性能，就会导致 <code>setTimeout</code> 不会按期执行。当然了，可以通过代码去修正 <code>setTimeout</code>，从而使定时器相对准确：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">let</span> period = <span class="hljs-number">60</span> * <span class="hljs-number">1000</span> * <span class="hljs-number">60</span> * <span class="hljs-number">2</span>
+<span class="hljs-keyword">let</span> startTime = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().getTime()
+<span class="hljs-keyword">let</span> count = <span class="hljs-number">0</span>
+<span class="hljs-keyword">let</span> end = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().getTime() + period
+<span class="hljs-keyword">let</span> interval = <span class="hljs-number">1000</span>
+<span class="hljs-keyword">let</span> currentInterval = interval
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">loop</span>(<span class="hljs-params"></span>) </span>{
+  count++
+  <span class="hljs-comment">// 代码执行所消耗的时间</span>
+  <span class="hljs-keyword">let</span> offset = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().getTime() - (startTime + count * interval);
+  <span class="hljs-keyword">let</span> diff = end - <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().getTime()
+  <span class="hljs-keyword">let</span> h = <span class="hljs-built_in">Math</span>.floor(diff / (<span class="hljs-number">60</span> * <span class="hljs-number">1000</span> * <span class="hljs-number">60</span>))
+  <span class="hljs-keyword">let</span> hdiff = diff % (<span class="hljs-number">60</span> * <span class="hljs-number">1000</span> * <span class="hljs-number">60</span>)
+  <span class="hljs-keyword">let</span> m = <span class="hljs-built_in">Math</span>.floor(hdiff / (<span class="hljs-number">60</span> * <span class="hljs-number">1000</span>))
+  <span class="hljs-keyword">let</span> mdiff = hdiff % (<span class="hljs-number">60</span> * <span class="hljs-number">1000</span>)
+  <span class="hljs-keyword">let</span> s = mdiff / (<span class="hljs-number">1000</span>)
+  <span class="hljs-keyword">let</span> sCeil = <span class="hljs-built_in">Math</span>.ceil(s)
+  <span class="hljs-keyword">let</span> sFloor = <span class="hljs-built_in">Math</span>.floor(s)
+  <span class="hljs-comment">// 得到下一次循环所消耗的时间</span>
+  currentInterval = interval - offset
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'时：'</span>+h, <span class="hljs-string">'分：'</span>+m, <span class="hljs-string">'毫秒：'</span>+s, <span class="hljs-string">'秒向上取整：'</span>+sCeil, <span class="hljs-string">'代码执行时间：'</span>+offset, <span class="hljs-string">'下次循环间隔'</span>+currentInterval)
+  <span class="hljs-built_in">setTimeout</span>(loop, currentInterval)
+}
+<span class="hljs-built_in">setTimeout</span>(loop, currentInterval)
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>接下来看 <code>setInterval</code>，其实这个函数作用和 <code>setTimeout</code> 基本一致，只是该函数是每隔一段时间执行一次回调函数。</p>
+        <p>通常来说不建议使用 <code>setInterval</code>。第一，它和 <code>setTimeout</code> 一样，不能保证在预期的时间执行任务。第二，它存在执行累积的问题，请看以下伪代码</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">demo</span>(<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">setInterval</span>(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-number">2</span>)
+  },<span class="hljs-number">1000</span>)
+  sleep(<span class="hljs-number">2000</span>)
+}
+demo()
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>以上代码在浏览器环境中，如果定时器执行过程中出现了耗时操作，多个回调函数会在耗时操作结束以后同时执行，这样可能就会带来性能上的问题。</p>
+        <p>如果有循环定时器的需求，其实完全可以通过 <code>requestAnimationFrame</code> 来实现：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">setInterval</span>(<span class="hljs-params">callback, interval</span>) </span>{
+  <span class="hljs-keyword">let</span> timer
+  <span class="hljs-keyword">const</span> now = <span class="hljs-built_in">Date</span>.now
+  <span class="hljs-keyword">let</span> startTime = now()
+  <span class="hljs-keyword">let</span> endTime = startTime
+  <span class="hljs-keyword">const</span> loop = <span class="hljs-function">() =&gt;</span> {
+    timer = <span class="hljs-built_in">window</span>.requestAnimationFrame(loop)
+    endTime = now()
+    <span class="hljs-keyword">if</span> (endTime - startTime &gt;= interval) {
+      startTime = endTime = now()
+      callback(timer)
+    }
+  }
+  timer = <span class="hljs-built_in">window</span>.requestAnimationFrame(loop)
+  <span class="hljs-keyword">return</span> timer
+}
+<span class="hljs-keyword">let</span> a = <span class="hljs-number">0</span>
+<span class="hljs-built_in">setInterval</span>(<span class="hljs-function"><span class="hljs-params">timer</span> =&gt;</span> {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-number">1</span>)
+  a++
+  <span class="hljs-keyword">if</span> (a === <span class="hljs-number">3</span>) cancelAnimationFrame(timer)
+}, <span class="hljs-number">1000</span>)
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>首先 <code>requestAnimationFrame</code> 自带函数节流功能，基本可以保证在 16.6 毫秒内只执行一次（不掉帧的情况下），并且该函数的延时效果是精确的，没有其他定时器时间不准的问题，当然你也可以通过该函数来实现 <code>setTimeout</code>。</p>
+      </el-collapse-item>
     </el-collapse>
   </div>
 </template>

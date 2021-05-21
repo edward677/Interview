@@ -200,6 +200,179 @@ rest  <span class="hljs-comment">// [2, 3, 4, 5]</span>
 <span class="hljs-built_in">Math</span>.max(...numbers); <span class="hljs-comment">// 9</span>
 <span class="copy-code-btn">复制代码</span></code></pre>
       </el-collapse-item>
+      <el-collapse-item title="7. Proxy 可以实现什么功能？">
+        <p>在 Vue3.0 中通过 <code>Proxy</code> 来替换原本的 <code>Object.defineProperty</code> 来实现数据响应式。</p>
+        <p>Proxy 是 ES6 中新增的功能，它可以用来自定义对象中的操作。</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">let</span> p = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Proxy</span>(target, handler)
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p><code>target</code> 代表需要添加代理的对象，<code>handler</code> 用来自定义对象中的操作，比如可以用来自定义 <code>set</code> 或者 <code>get</code> 函数。</p>
+        <p>下面来通过 <code>Proxy</code> 来实现一个数据响应式：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">let</span> onWatch = <span class="hljs-function">(<span class="hljs-params">obj, setBind, getLogger</span>) =&gt;</span> {
+  <span class="hljs-keyword">let</span> handler = {
+    <span class="hljs-function"><span class="hljs-title">get</span>(<span class="hljs-params">target, property, receiver</span>)</span> {
+      getLogger(target, property)
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">Reflect</span>.get(target, property, receiver)
+    },
+    <span class="hljs-function"><span class="hljs-title">set</span>(<span class="hljs-params">target, property, value, receiver</span>)</span> {
+      setBind(value, property)
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">Reflect</span>.set(target, property, value)
+    }
+  }
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Proxy</span>(obj, handler)
+}
+<span class="hljs-keyword">let</span> obj = { <span class="hljs-attr">a</span>: <span class="hljs-number">1</span> }
+<span class="hljs-keyword">let</span> p = onWatch(
+  obj,
+  <span class="hljs-function">(<span class="hljs-params">v, property</span>) =&gt;</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`监听到属性<span class="hljs-subst">${property}</span>改变为<span class="hljs-subst">${v}</span>`</span>)
+  },
+  <span class="hljs-function">(<span class="hljs-params">target, property</span>) =&gt;</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`'<span class="hljs-subst">${property}</span>' = <span class="hljs-subst">${target[property]}</span>`</span>)
+  }
+)
+p.a = <span class="hljs-number">2</span> <span class="hljs-comment">// 监听到属性a改变</span>
+p.a <span class="hljs-comment">// 'a' = 2</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>在上述代码中，通过自定义 <code>set</code> 和 <code>get</code> 函数的方式，在原本的逻辑中插入了我们的函数逻辑，实现了在对对象任何属性进行读写时发出通知。</p>
+        <p>当然这是简单版的响应式实现，如果需要实现一个 Vue 中的响应式，需要在 <code>get</code> 中收集依赖，在 <code>set</code> 派发更新，之所以 Vue3.0 要使用 <code>Proxy</code> 替换原本的 API 原因在于 <code>Proxy</code> 无需一层层递归为每个属性添加代理，一次即可完成以上操作，性能上更好，并且原本的实现有一些数据更新不能监听到，但是 <code>Proxy</code> 可以完美监听到任何方式的数据改变，唯一缺陷就是浏览器的兼容性不好。</p>
+      </el-collapse-item>
+      <el-collapse-item title="8. 对对象与数组的解构的理解">
+        <p>解构是 ES6 提供的一种新的提取数据的模式，这种模式能够从对象或数组里有针对性地拿到想要的数值。
+          <strong>1）数组的解构</strong>
+          在解构数组时，以元素的位置为匹配条件来提取想要的数据的：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> [a, b, c] = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>最终，a、b、c分别被赋予了数组第0、1、2个索引位的值：
+          <img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e55fc36b191340e69698782fbd67ef4f~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy" class="medium-zoom-image">
+          数组里的0、1、2索引位的元素值，精准地被映射到了左侧的第0、1、2个变量里去，这就是数组解构的工作模式。还可以通过给左侧变量数组设置空占位的方式，实现对数组中某几个元素的精准提取：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> [a,,c] = [<span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">3</span>]
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>通过把中间位留空，可以顺利地把数组第一位和最后一位的值赋给 a、c 两个变量：
+          <img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a14ffbb3df2646a4a84f4a0c7d62d975~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy" class="medium-zoom-image"></p>
+        <p><strong>2）对象的解构</strong>
+          对象解构比数组结构稍微复杂一些，也更显强大。在解构对象时，是以属性的名称为匹配条件，来提取想要的数据的。现在定义一个对象：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> stu = {
+  <span class="hljs-attr">name</span>: <span class="hljs-string">'Bob'</span>,
+  <span class="hljs-attr">age</span>: <span class="hljs-number">24</span>
+}
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>假如想要解构它的两个自有属性，可以这样：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> { name, age } = stu
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>这样就得到了 name 和 age 两个和 stu 平级的变量：
+          <img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1ed2565845f2415b8243c8c355b2c6d6~tplv-k3u1fbpfcp-zoom-1.image" alt="" loading="lazy" class="medium-zoom-image"></p>
+        <p>注意，对象解构严格以属性名作为定位依据，所以就算调换了 name 和 age 的位置，结果也是一样的：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> { age, name } = stu
+<span class="copy-code-btn">复制代码</span></code></pre>
+      </el-collapse-item>
+      <el-collapse-item title="9. 如何提取高度嵌套的对象里的指定属性？">
+        <p>有时会遇到一些嵌套程度非常深的对象：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> school = {
+   <span class="hljs-attr">classes</span>: {
+      <span class="hljs-attr">stu</span>: {
+         <span class="hljs-attr">name</span>: <span class="hljs-string">'Bob'</span>,
+         <span class="hljs-attr">age</span>: <span class="hljs-number">24</span>,
+      }
+   }
+}
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>像此处的 name 这个变量，嵌套了四层，此时如果仍然尝试老方法来提取它：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> { name } = school
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>显然是不奏效的，因为 school 这个对象本身是没有 name 这个属性的，name 位于 school 对象的“儿子的儿子”对象里面。要想把 name 提取出来，一种比较笨的方法是逐层解构：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> { classes } = school
+<span class="hljs-keyword">const</span> { stu } = classes
+<span class="hljs-keyword">const</span> { name } = stu
+name <span class="hljs-comment">// 'Bob'</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>但是还有一种更标准的做法，可以用一行代码来解决这个问题：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> { <span class="hljs-attr">classes</span>: { <span class="hljs-attr">stu</span>: { name } }} = school
+
+<span class="hljs-built_in">console</span>.log(name)  <span class="hljs-comment">// 'Bob'</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>可以在解构出来的变量名右侧，通过冒号+{目标属性名}这种形式，进一步解构它，一直解构到拿到目标数据为止。</p>
+      </el-collapse-item>
+      <el-collapse-item title="10. 对 rest 参数的理解">
+        <p>扩展运算符被用在函数形参上时，<strong>它还可以把一个分离的参数序列整合成一个数组</strong>：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">mutiple</span>(<span class="hljs-params">...args</span>) </span>{
+  <span class="hljs-keyword">let</span> result = <span class="hljs-number">1</span>;
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> val <span class="hljs-keyword">of</span> args) {
+    result *= val;
+  }
+  <span class="hljs-keyword">return</span> result;
+}
+mutiple(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>) <span class="hljs-comment">// 24</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>这里，传入 mutiple 的是四个分离的参数，但是如果在 mutiple 函数里尝试输出 args 的值，会发现它是一个数组：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">mutiple</span>(<span class="hljs-params">...args</span>) </span>{
+  <span class="hljs-built_in">console</span>.log(args)
+}
+mutiple(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>) <span class="hljs-comment">// [1, 2, 3, 4]</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>这就是 … rest运算符的又一层威力了，它可以把函数的多个入参收敛进一个数组里。这一点<strong>经常用于获取函数的多余参数，或者像上面这样处理函数参数个数不确定的情况。</strong></p>
+      </el-collapse-item>
+      <el-collapse-item title="11. ES6中模板语法与字符串处理">
+        <p>ES6 提出了“模板语法”的概念。在 ES6 以前，拼接字符串是很麻烦的事情：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">var</span> name = <span class="hljs-string">'css'</span>
+<span class="hljs-keyword">var</span> career = <span class="hljs-string">'coder'</span>
+<span class="hljs-keyword">var</span> hobby = [<span class="hljs-string">'coding'</span>, <span class="hljs-string">'writing'</span>]
+<span class="hljs-keyword">var</span> finalString = <span class="hljs-string">'my name is '</span> + name + <span class="hljs-string">', I work as a '</span> + career + <span class="hljs-string">', I love '</span> + hobby[<span class="hljs-number">0</span>] + <span class="hljs-string">' and '</span> + hobby[<span class="hljs-number">1</span>]
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>仅仅几个变量，写了这么多加号，还要时刻小心里面的空格和标点符号有没有跟错地方。但是有了模板字符串，拼接难度直线下降：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">var</span> name = <span class="hljs-string">'css'</span>
+<span class="hljs-keyword">var</span> career = <span class="hljs-string">'coder'</span>
+<span class="hljs-keyword">var</span> hobby = [<span class="hljs-string">'coding'</span>, <span class="hljs-string">'writing'</span>]
+<span class="hljs-keyword">var</span> finalString = <span class="hljs-string">`my name is <span class="hljs-subst">${name}</span>, I work as a <span class="hljs-subst">${career}</span> I love <span class="hljs-subst">${hobby[<span class="hljs-number">0</span>]}</span> and <span class="hljs-subst">${hobby[<span class="hljs-number">1</span>]}</span>`</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>字符串不仅更容易拼了，也更易读了，代码整体的质量都变高了。这就是模板字符串的第一个优势——允许用${}的方式嵌入变量。但这还不是问题的关键，模板字符串的关键优势有两个：</p>
+        <ul>
+          <li>在模板字符串中，空格、缩进、换行都会被保留</li>
+          <li>模板字符串完全支持“运算”式的表达式，可以在${}里完成一些计算</li>
+        </ul>
+        <p>基于第一点，可以在模板字符串里无障碍地直接写 html 代码：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">let</span> list = <span class="hljs-string">`
+	&lt;ul&gt;
+		&lt;li&gt;列表项1&lt;/li&gt;
+		&lt;li&gt;列表项2&lt;/li&gt;
+	&lt;/ul&gt;
+`</span>;
+<span class="hljs-built_in">console</span>.log(message); <span class="hljs-comment">// 正确输出，不存在报错</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>基于第二点，可以把一些简单的计算和调用丢进 ${} 来做：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">add</span>(<span class="hljs-params">a, b</span>) </span>{
+  <span class="hljs-keyword">const</span> finalString = <span class="hljs-string">`<span class="hljs-subst">${a}</span> + <span class="hljs-subst">${b}</span> = <span class="hljs-subst">${a+b}</span>`</span>
+  <span class="hljs-built_in">console</span>.log(finalString)
+}
+add(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>) <span class="hljs-comment">// 输出 '1 + 2 = 3'</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>除了模板语法外， ES6中还新增了一系列的字符串方法用于提升开发效率：</p>
+        <p>（1）<strong>存在性判定</strong>：在过去，当判断一个字符/字符串是否在某字符串中时，只能用 indexOf &gt; -1 来做。现在 ES6 提供了三个方法：includes、startsWith、endsWith，它们都会返回一个布尔值来告诉你是否存在。</p>
+        <ul>
+          <li><strong>includes</strong>：判断字符串与子串的包含关系：</li>
+        </ul>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> son = <span class="hljs-string">'haha'</span>
+<span class="hljs-keyword">const</span> father = <span class="hljs-string">'xixi haha hehe'</span>
+father.includes(son) <span class="hljs-comment">// true</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <ul>
+          <li><strong>startsWith</strong>：判断字符串是否以某个/某串字符开头：</li>
+        </ul>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> father = <span class="hljs-string">'xixi haha hehe'</span>
+father.startsWith(<span class="hljs-string">'haha'</span>) <span class="hljs-comment">// false</span>
+father.startsWith(<span class="hljs-string">'xixi'</span>) <span class="hljs-comment">// true</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <ul>
+          <li><strong>endsWith</strong>：判断字符串是否以某个/某串字符结尾：</li>
+        </ul>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> father = <span class="hljs-string">'xixi haha hehe'</span>
+  father.endsWith(<span class="hljs-string">'hehe'</span>) <span class="hljs-comment">// true</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>（2）<strong>自动重复</strong>：可以使用 repeat 方法来使同一个字符串输出多次（被连续复制多次）：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">const</span> sourceCode = <span class="hljs-string">'repeat for 3 times;'</span>
+<span class="hljs-keyword">const</span> repeated = sourceCode.repeat(<span class="hljs-number">3</span>)
+<span class="hljs-built_in">console</span>.log(repeated) <span class="hljs-comment">// repeat for 3 times;repeat for 3 times;repeat for 3 times;</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+      </el-collapse-item>
     </el-collapse>
   </div>
 </template>

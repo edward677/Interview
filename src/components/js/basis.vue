@@ -512,6 +512,333 @@ xhr.send(<span class="hljs-literal">null</span>);
 }
 <span class="copy-code-btn">复制代码</span></code></pre>
       </el-collapse-item>
+      <el-collapse-item title="16. JavaScript为什么要进行变量提升，它导致了什么问题？">
+        <p>变量提升的表现是，无论在函数中何处位置声明的变量，好像都被提升到了函数的首部，可以在变量声明前访问到而不会报错。</p>
+        <p>造成变量声明提升的<strong>本质原因</strong>是 js 引擎在代码执行前有一个解析的过程，创建了执行上下文，初始化了一些代码执行时需要用到的对象。当访问一个变量时，会到当前执行上下文中的作用域链中去查找，而作用域链的首端指向的是当前执行上下文的变量对象，这个变量对象是执行上下文的一个属性，它包含了函数的形参、所有的函数和变量声明，这个对象的是在代码解析的时候创建的。</p>
+        <p>首先要知道，JS在拿到一个变量或者一个函数的时候，会有两步操作，即解析和执行。</p>
+        <ul>
+          <li><strong>在解析阶段</strong>，JS会检查语法，并对函数进行预编译。解析的时候会先创建一个全局执行上下文环境，先把代码中即将执行的变量、函数声明都拿出来，变量先赋值为undefined，函数先声明好可使用。在一个函数执行之前，也会创建一个函数执行上下文环境，跟全局执行上下文类似，不过函数执行上下文会多出this、arguments和函数的参数。
+            <ul>
+              <li>全局上下文：变量定义，函数声明</li>
+              <li>函数上下文：变量定义，函数声明，this，arguments</li>
+            </ul>
+          </li>
+          <li><strong>在执行阶段</strong>，就是按照代码的顺序依次执行。</li>
+        </ul>
+        <p>那为什么会进行变量提升呢？主要有以下两个原因：</p>
+        <ul>
+          <li>提高性能</li>
+          <li>容错性更好</li>
+        </ul>
+        <p><strong>（1）提高性能</strong>
+          在JS代码执行之前，会进行语法检查和预编译，并且这一操作只进行一次。这么做就是为了提高性能，如果没有这一步，那么每次执行代码前都必须重新解析一遍该变量（函数），而这是没有必要的，因为变量（函数）的代码并不会改变，解析一遍就够了。</p>
+        <p>在解析的过程中，还会为函数生成预编译代码。在预编译时，会统计声明了哪些变量、创建了哪些函数，并对函数的代码进行压缩，去除注释、不必要的空白等。这样做的好处就是每次执行函数时都可以直接为该函数分配栈空间（不需要再解析一遍去获取代码中声明了哪些变量，创建了哪些函数），并且因为代码压缩的原因，代码执行也更快了。
+          <strong>（2）容错性更好</strong>
+          变量提升可以在一定程度上提高JS的容错性，看下面的代码：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript">a = <span class="hljs-number">1</span>;
+<span class="hljs-keyword">var</span> a;
+<span class="hljs-built_in">console</span>.log(a);
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>如果没有变量提升，这两行代码就会报错，但是因为有了变量提升，这段代码就可以正常执行。</p>
+        <p>虽然，在可以开发过程中，可以完全避免这样写，但是有时代码很复杂的时候。可能因为疏忽而先使用后定义了，这样也不会影响正常使用。由于变量提升的存在，而会正常运行。</p>
+        <p><strong>总结：</strong></p>
+        <ul>
+          <li>解析和预编译过程中的声明提升可以提高性能，让函数可以在执行时预先为变量分配栈空间</li>
+          <li>声明提升还可以提高JS代码的容错性，使一些不规范的代码也可以正常执行</li>
+        </ul>
+        <p>变量提升虽然有一些优点，但是他也会造成一定的问题，在ES6中提出了let、const来定义变量，它们就没有变量提升的机制。
+          下面来看一下变量提升可能会导致的问题：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">var</span> tmp = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>();
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">fn</span>(<span class="hljs-params"></span>)</span>{
+	<span class="hljs-built_in">console</span>.log(tmp);
+	<span class="hljs-keyword">if</span>(<span class="hljs-literal">false</span>){
+		<span class="hljs-keyword">var</span> tmp = <span class="hljs-string">'hello world'</span>;
+	}
+}
+
+fn();  <span class="hljs-comment">// undefined</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>在这个函数中，原本是要打印出外层的tmp变量，但是因为变量提升的问题，内层定义的tmp被提到函数内部的最顶部，相当于覆盖了外层的tmp，所以打印结果为undefined。</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">var</span> tmp = <span class="hljs-string">'hello world'</span>;
+
+<span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; tmp.length; i++) {
+	<span class="hljs-built_in">console</span>.log(tmp[i]);
+}
+
+<span class="hljs-built_in">console</span>.log(i); <span class="hljs-comment">// 11</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>由于遍历时定义的i会变量提升成为一个全局变量，在函数结束之后不会被销毁，所以打印出来11。</p>
+      </el-collapse-item>
+      <el-collapse-item title="17. 什么是尾调用，使用尾调用有什么好处？">
+        <p>尾调用指的是函数的最后一步调用另一个函数。代码执行是基于执行栈的，所以当在一个函数里调用另一个函数时，会保留当前的执行上下文，然后再新建另外一个执行上下文加入栈中。使用尾调用的话，因为已经是函数的最后一步，所以这时可以不必再保留当前的执行上下文，从而节省了内存，这就是尾调用优化。但是 ES6 的尾调用优化只在严格模式下开启，正常模式是无效的。</p>
+      </el-collapse-item>
+      <el-collapse-item title="18. ES6模块与CommonJS模块有什么异同？">
+        <p>ES6 Module和CommonJS模块的区别：</p>
+        <ul>
+          <li>CommonJS是对模块的浅拷⻉，ES6 Module是对模块的引⽤，即ES6 Module只存只读，不能改变其值，也就是指针指向不能变，类似const；</li>
+          <li>import的接⼝是read-only（只读状态），不能修改其变量值。 即不能修改其变量的指针指向，但可以改变变量内部指针指向，可以对commonJS对重新赋值（改变指针指向），但是对ES6 Module赋值会编译报错。</li>
+        </ul>
+        <p>ES6 Module和CommonJS模块的共同点：</p>
+        <ul>
+          <li>CommonJS和ES6 Module都可以对引⼊的对象进⾏赋值，即对对象内部属性的值进⾏改变。</li>
+        </ul>
+      </el-collapse-item>
+      <el-collapse-item title="19. 常见的DOM操作有哪些">
+        <h4 data-id="heading-68">1）DOM 节点的获取</h4>
+        <p>DOM 节点的获取的API及使用：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript">getElementById <span class="hljs-comment">// 按照 id 查询</span>
+getElementsByTagName <span class="hljs-comment">// 按照标签名查询</span>
+getElementsByClassName <span class="hljs-comment">// 按照类名查询</span>
+querySelectorAll <span class="hljs-comment">// 按照 css 选择器查询</span>
+
+<span class="hljs-comment">// 按照 id 查询</span>
+<span class="hljs-keyword">var</span> imooc = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'imooc'</span>) <span class="hljs-comment">// 查询到 id 为 imooc 的元素</span>
+<span class="hljs-comment">// 按照标签名查询</span>
+<span class="hljs-keyword">var</span> pList = <span class="hljs-built_in">document</span>.getElementsByTagName(<span class="hljs-string">'p'</span>)  <span class="hljs-comment">// 查询到标签为 p 的集合</span>
+<span class="hljs-built_in">console</span>.log(divList.length)
+<span class="hljs-built_in">console</span>.log(divList[<span class="hljs-number">0</span>])
+<span class="hljs-comment">// 按照类名查询</span>
+<span class="hljs-keyword">var</span> moocList = <span class="hljs-built_in">document</span>.getElementsByClassName(<span class="hljs-string">'mooc'</span>) <span class="hljs-comment">// 查询到类名为 mooc 的集合</span>
+<span class="hljs-comment">// 按照 css 选择器查询</span>
+<span class="hljs-keyword">var</span> pList = <span class="hljs-built_in">document</span>.querySelectorAll(<span class="hljs-string">'.mooc'</span>) <span class="hljs-comment">// 查询到类名为 mooc 的集合</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <h4 data-id="heading-69">2）DOM 节点的创建</h4>
+        <p><strong>创建一个新节点，并把它添加到指定节点的后面。</strong> 已知的 HTML 结构如下：</p>
+        <pre><code class="hljs language-html copyable" lang="html"><span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">title</span>&gt;</span>DEMO<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">"container"</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">h1</span> <span class="hljs-attr">id</span>=<span class="hljs-string">"title"</span>&gt;</span>我是标题<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>要求添加一个有内容的 span 节点到 id 为 title 的节点后面，做法就是：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-comment">// 首先获取父节点</span>
+<span class="hljs-keyword">var</span> container = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'container'</span>)
+<span class="hljs-comment">// 创建新节点</span>
+<span class="hljs-keyword">var</span> targetSpan = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'span'</span>)
+<span class="hljs-comment">// 设置 span 节点的内容</span>
+targetSpan.innerHTML = <span class="hljs-string">'hello world'</span>
+<span class="hljs-comment">// 把新创建的元素塞进父节点里去</span>
+container.appendChild(targetSpan)
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <h4 data-id="heading-70">3）DOM 节点的删除</h4>
+        <p><strong>删除指定的 DOM 节点，</strong> 已知的 HTML 结构如下：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript">&lt;html&gt;
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">title</span>&gt;</span>DEMO<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span></span>
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">"container"</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">h1</span> <span class="hljs-attr">id</span>=<span class="hljs-string">"title"</span>&gt;</span>我是标题<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span></span>
+&lt;/html&gt;
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>需要删除 id 为 title 的元素，做法是：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-comment">// 获取目标元素的父元素</span>
+<span class="hljs-keyword">var</span> container = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'container'</span>)
+<span class="hljs-comment">// 获取目标元素</span>
+<span class="hljs-keyword">var</span> targetNode = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'title'</span>)
+<span class="hljs-comment">// 删除目标元素</span>
+container.removeChild(targetNode)
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>或者通过子节点数组来完成删除：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-comment">// 获取目标元素的父元素var container = document.getElementById('container')// 获取目标元素var targetNode = container.childNodes[1]// 删除目标元素container.removeChild(targetNode)</span>
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <h4 data-id="heading-71">4）修改 DOM 元素</h4>
+        <p>修改 DOM 元素这个动作可以分很多维度，比如说移动 DOM 元素的位置，修改 DOM 元素的属性等。</p>
+        <p><strong>将指定的两个 DOM 元素交换位置，</strong> 已知的 HTML 结构如下：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript">&lt;html&gt;
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">title</span>&gt;</span>DEMO<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span></span>
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">"container"</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">h1</span> <span class="hljs-attr">id</span>=<span class="hljs-string">"title"</span>&gt;</span>我是标题<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">p</span> <span class="hljs-attr">id</span>=<span class="hljs-string">"content"</span>&gt;</span>我是内容<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span></span>
+&lt;/html&gt;
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>现在需要调换 title 和 content 的位置，可以考虑 insertBefore 或者 appendChild：</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-comment">// 获取父元素</span>
+<span class="hljs-keyword">var</span> container = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'container'</span>)
+
+<span class="hljs-comment">// 获取两个需要被交换的元素</span>
+<span class="hljs-keyword">var</span> title = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'title'</span>)
+<span class="hljs-keyword">var</span> content = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'content'</span>)
+<span class="hljs-comment">// 交换两个元素，把 content 置于 title 前面</span>
+container.insertBefore(content, title)
+<span class="copy-code-btn">复制代码</span></code></pre>
+      </el-collapse-item>
+      <el-collapse-item title="20. use strict是什么意思 ? 使用它区别是什么？">
+        <p>use strict 是一种 ECMAscript5 添加的（严格模式）运行模式，这种模式使得 Javascript 在更严格的条件下运行。设立严格模式的目的如下：</p>
+        <ul>
+          <li>消除 Javascript 语法的不合理、不严谨之处，减少怪异行为;</li>
+          <li>消除代码运行的不安全之处，保证代码运行的安全；</li>
+          <li>提高编译器效率，增加运行速度；</li>
+          <li>为未来新版本的 Javascript 做好铺垫。</li>
+        </ul>
+        <p>区别：</p>
+        <ul>
+          <li>禁止使用 with 语句。</li>
+          <li>禁止 this 关键字指向全局对象。</li>
+          <li>对象不能有重名的属性。</li>
+        </ul>
+      </el-collapse-item>
+      <el-collapse-item title="21. 如何判断一个对象是否属于某个类？">
+        <ul>
+          <li>第一种方式，使用 instanceof 运算符来判断构造函数的 prototype 属性是否出现在对象的原型链中的任何位置。</li>
+          <li>第二种方式，通过对象的 constructor 属性来判断，对象的 constructor 属性指向该对象的构造函数，但是这种方式不是很安全，因为 constructor 属性可以被改写。</li>
+          <li>第三种方式，如果需要判断的是某个内置的引用类型的话，可以使用 Object.prototype.toString() 方法来打印对象的[[Class]] 属性来进行判断。</li>
+        </ul>
+      </el-collapse-item>
+      <el-collapse-item title="22. 强类型语言和弱类型语言的区别">
+        <ul>
+          <li><strong>强类型语言</strong>：强类型语言也称为强类型定义语言，是一种总是强制类型定义的语言，要求变量的使用要严格符合定义，所有变量都必须先定义后使用。Java和C++等语言都是强制类型定义的，也就是说，一旦一个变量被指定了某个数据类型，如果不经过强制转换，那么它就永远是这个数据类型了。例如你有一个整数，如果不显式地进行转换，你不能将其视为一个字符串。</li>
+          <li><strong>弱类型语言</strong>：弱类型语言也称为弱类型定义语言，与强类型定义相反。JavaScript语言就属于弱类型语言。简单理解就是一种变量类型可以被忽略的语言。比如JavaScript是弱类型定义的，在JavaScript中就可以将字符串'12'和整数3进行连接得到字符串'123'，在相加的时候会进行强制类型转换。</li>
+        </ul>
+        <p>两者对比：强类型语言在速度上可能略逊色于弱类型语言，但是强类型语言带来的严谨性可以有效地帮助避免许多错误。</p>
+      </el-collapse-item>
+      <el-collapse-item title="23. 解释性语言和编译型语言的区别">
+        <p>（1）解释型语言
+          使用专门的解释器对源程序逐行解释成特定平台的机器码并立即执行。是代码在执行时才被解释器一行行动态翻译和执行，而不是在执行之前就完成翻译。解释型语言不需要事先编译，其直接将源代码解释成机器码并立即执行，所以只要某一平台提供了相应的解释器即可运行该程序。其特点总结如下</p>
+        <ul>
+          <li>解释型语言每次运行都需要将源代码解释称机器码并执行，效率较低；</li>
+          <li>只要平台提供相应的解释器，就可以运行源代码，所以可以方便源程序移植；</li>
+          <li>JavaScript、Python等属于解释型语言。</li>
+        </ul>
+        <p>（2）编译型语言
+          使用专门的编译器，针对特定的平台，将高级语言源代码一次性的编译成可被该平台硬件执行的机器码，并包装成该平台所能识别的可执行性程序的格式。在编译型语言写的程序执行之前，需要一个专门的编译过程，把源代码编译成机器语言的文件，如exe格式的文件，以后要再运行时，直接使用编译结果即可，如直接运行exe文件。因为只需编译一次，以后运行时不需要编译，所以编译型语言执行效率高。其特点总结如下：</p>
+        <ul>
+          <li>一次性的编译成平台相关的机器语言文件，运行时脱离开发环境，运行效率高；</li>
+          <li>与特定平台相关，一般无法移植到其他平台；</li>
+          <li>C、C++等属于编译型语言。</li>
+        </ul>
+        <p><strong>两者主要区别在于：</strong> 前者源程序编译后即可在该平台运行，后者是在运行期间才编译。所以前者运行速度快，后者跨平台性好。</p>
+      </el-collapse-item>
+      <el-collapse-item title="24. for...in和for...of的区别">
+        <p>for…of 是ES6新增的遍历方式，允许遍历一个含有iterator接口的数据结构（数组、对象等）并且返回各项的值，和ES3中的for…in的区别如下</p>
+        <ul>
+          <li>for…of 遍历获取的是对象的键值，for…in 获取的是对象的键名；</li>
+          <li>for… in 会遍历对象的整个原型链，性能非常差不推荐使用，而 for … of 只遍历当前对象不会遍历原型链；</li>
+          <li>对于数组的遍历，for…in 会返回数组中所有可枚举的属性(包括原型链上可枚举的属性)，for…of 只返回数组的下标对应的属性值；</li>
+        </ul>
+        <p><strong>总结：</strong> for...in 循环主要是为了遍历对象而生，不适用于遍历数组；for...of 循环可以用来遍历数组、类数组对象，字符串、Set、Map 以及 Generator 对象。</p>
+        <h3 data-id="heading-77">26. 如何使用for...of遍历对象</h3>
+      </el-collapse-item>
+      <el-collapse-item title="25. 如何使用for...of遍历对象">
+        <p>for…of是作为ES6新增的遍历方式，允许遍历一个含有iterator接口的数据结构（数组、对象等）并且返回各项的值，普通的对象用for..of遍历是会报错的。</p>
+        <p>如果需要遍历的对象是类数组对象，用Array.from转成数组即可。</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-keyword">var</span> obj = {
+    <span class="hljs-number">0</span>:<span class="hljs-string">'one'</span>,
+    <span class="hljs-number">1</span>:<span class="hljs-string">'two'</span>,
+    <span class="hljs-attr">length</span>: <span class="hljs-number">2</span>
+};
+obj = <span class="hljs-built_in">Array</span>.from(obj);
+<span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> k <span class="hljs-keyword">of</span> obj){
+    <span class="hljs-built_in">console</span>.log(k)
+}
+<span class="copy-code-btn">复制代码</span></code></pre>
+        <p>如果不是类数组对象，就给对象添加一个[Symbol.iterator]属性，并指向一个迭代器即可。</p>
+        <pre><code class="hljs language-javascript copyable" lang="javascript"><span class="hljs-comment">//方法一：</span>
+<span class="hljs-keyword">var</span> obj = {
+    <span class="hljs-attr">a</span>:<span class="hljs-number">1</span>,
+    <span class="hljs-attr">b</span>:<span class="hljs-number">2</span>,
+    <span class="hljs-attr">c</span>:<span class="hljs-number">3</span>
+};
+
+obj[<span class="hljs-built_in">Symbol</span>.iterator] = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
+	<span class="hljs-keyword">var</span> keys = <span class="hljs-built_in">Object</span>.keys(<span class="hljs-built_in">this</span>);
+	<span class="hljs-keyword">var</span> count = <span class="hljs-number">0</span>;
+	<span class="hljs-keyword">return</span> {
+		<span class="hljs-function"><span class="hljs-title">next</span>(<span class="hljs-params"></span>)</span>{
+			<span class="hljs-keyword">if</span>(count&lt;keys.length){
+				<span class="hljs-keyword">return</span> {<span class="hljs-attr">value</span>: obj[keys[count++]],<span class="hljs-attr">done</span>:<span class="hljs-literal">false</span>};
+			}<span class="hljs-keyword">else</span>{
+				<span class="hljs-keyword">return</span> {<span class="hljs-attr">value</span>:<span class="hljs-literal">undefined</span>,<span class="hljs-attr">done</span>:<span class="hljs-literal">true</span>};
+			}
+		}
+	}
+};
+
+<span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> k <span class="hljs-keyword">of</span> obj){
+	<span class="hljs-built_in">console</span>.log(k);
+}
+
+
+<span class="hljs-comment">// 方法二</span>
+<span class="hljs-keyword">var</span> obj = {
+    <span class="hljs-attr">a</span>:<span class="hljs-number">1</span>,
+    <span class="hljs-attr">b</span>:<span class="hljs-number">2</span>,
+    <span class="hljs-attr">c</span>:<span class="hljs-number">3</span>
+};
+obj[<span class="hljs-built_in">Symbol</span>.iterator] = <span class="hljs-function"><span class="hljs-keyword">function</span>*(<span class="hljs-params"></span>)</span>{
+    <span class="hljs-keyword">var</span> keys = <span class="hljs-built_in">Object</span>.keys(obj);
+    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> k <span class="hljs-keyword">of</span> keys){
+        <span class="hljs-keyword">yield</span> [k,obj[k]]
+    }
+};
+
+<span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> [k,v] <span class="hljs-keyword">of</span> obj){
+    <span class="hljs-built_in">console</span>.log(k,v);
+}
+
+<span class="copy-code-btn">复制代码</span></code></pre>
+      </el-collapse-item>
+      <el-collapse-item title="26. ajax、axios、fetch的区别">
+        <p><strong>（1）AJAX</strong>
+          Ajax 即“AsynchronousJavascriptAndXML”（异步 JavaScript 和 XML），是指一种创建交互式网页应用的网页开发技术。它是一种在无需重新加载整个网页的情况下，能够更新部分网页的技术。通过在后台与服务器进行少量数据交换，Ajax 可以使网页实现异步更新。这意味着可以在不重新加载整个网页的情况下，对网页的某部分进行更新。传统的网页（不使用 Ajax）如果需要更新内容，必须重载整个网页页面。其缺点如下：</p>
+        <ul>
+          <li>本身是针对MVC编程，不符合前端MVVM的浪潮</li>
+          <li>基于原生XHR开发，XHR本身的架构不清晰</li>
+          <li>不符合关注分离（Separation of Concerns）的原则</li>
+          <li>配置和调用方式非常混乱，而且基于事件的异步模型不友好。</li>
+        </ul>
+        <p><strong>（2）Fetch</strong>
+          fetch号称是AJAX的替代品，是在ES6出现的，使用了ES6中的promise对象。Fetch是基于promise设计的。Fetch的代码结构比起ajax简单多。<strong>fetch不是ajax的进一步封装，而是原生js，没有使用XMLHttpRequest对象</strong>。</p>
+        <p>fetch的优点：</p>
+        <ul>
+          <li>语法简洁，更加语义化</li>
+          <li>基于标准 Promise 实现，支持 async/await</li>
+          <li>更加底层，提供的API丰富（request, response）</li>
+          <li>脱离了XHR，是ES规范里新的实现方式</li>
+        </ul>
+        <p>fetch的缺点：</p>
+        <ul>
+          <li>fetch只对网络请求报错，对400，500都当做成功的请求，服务器返回 400，500 错误码时并不会 reject，只有网络错误这些导致请求不能完成时，fetch 才会被 reject。</li>
+          <li>fetch默认不会带cookie，需要添加配置项： fetch(url, {credentials: 'include'})</li>
+          <li>fetch不支持abort，不支持超时控制，使用setTimeout及Promise.reject的实现的超时控制并不能阻止请求过程继续在后台运行，造成了流量的浪费</li>
+          <li>fetch没有办法原生监测请求的进度，而XHR可以</li>
+        </ul>
+        <p><strong>（3）Axios</strong>
+          Axios 是一种基于Promise封装的HTTP客户端，其特点如下：</p>
+        <ul>
+          <li>浏览器端发起XMLHttpRequests请求</li>
+          <li>node端发起http请求</li>
+          <li>支持Promise API</li>
+          <li>监听请求和返回</li>
+          <li>对请求和返回进行转化</li>
+          <li>取消请求</li>
+          <li>自动转换json数据</li>
+          <li>客户端支持抵御XSRF攻击</li>
+        </ul>
+      </el-collapse-item>
+      <el-collapse-item title="27. 数组的遍历方法有哪些">
+        <table><thead><tr><th><strong>方法</strong></th><th><strong>是否改变原数组</strong></th><th><strong>特点</strong></th></tr></thead><tbody><tr><td>forEach()</td><td>否</td><td>数组方法，不改变原数组，没有返回值</td></tr><tr><td>map()</td><td>否</td><td>数组方法，不改变原数组，有返回值，可链式调用</td></tr><tr><td>filter()</td><td>否</td><td>数组方法，过滤数组，返回包含符合条件的元素的数组，可链式调用</td></tr><tr><td>for...of</td><td>否</td><td>for...of遍历具有Iterator迭代器的对象的属性，返回的是数组的元素、对象的属性值，不能遍历普通的obj对象，将异步循环变成同步循环</td></tr><tr><td>every() 和 some()</td><td>否</td><td>数组方法，some()只要有一个是true，便返回true；而every()只要有一个是false，便返回false.</td></tr><tr><td>find() 和 findIndex()</td><td>否</td><td>数组方法，find()返回的是第一个符合条件的值；findIndex()返回的是第一个返回条件的值的索引值</td></tr><tr><td>reduce() 和 reduceRight()</td><td>否</td><td>数组方法，reduce()对数组正序操作；reduceRight()对数组逆序操作</td></tr></tbody></table>
+      </el-collapse-item>
+      <el-collapse-item title="28. forEach和map方法有什么区别">
+        <p>这方法都是用来遍历数组的，两者区别如下：</p>
+        <ul>
+          <li>forEach()方法会针对每一个元素执行提供的函数，对数据的操作会改变原数组，该方法没有返回值；</li>
+          <li>map()方法不会改变原数组的值，返回一个新数组，新数组中的值为原数组调用函数处理之后的值；</li>
+        </ul>
+      </el-collapse-item>
     </el-collapse>
   </div>
 </template>

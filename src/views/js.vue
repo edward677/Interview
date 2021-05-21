@@ -10,6 +10,8 @@
       <el-tab-pane label="this/call/apply/bind"><this/></el-tab-pane>
       <el-tab-pane label="异步"><asynchronous/></el-tab-pane>
       <el-tab-pane label="异步代码"><asynchronous-code/></el-tab-pane>
+      <el-tab-pane label="面向对象"><object1/></el-tab-pane>
+      <el-tab-pane label="垃圾回收与内存泄漏"><garbage-collection/></el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -24,14 +26,10 @@ import This from '../components/js/this'
 import Es6 from '../components/js/es6'
 import asynchronous from '../components/js/asynchronous'
 import asynchronousCode from '../components/js/asynchronousCode'
+import object1 from '../components/js/object'
+import garbageCollection from '../components/js/garbageCollection'
 
 export default {
-  data () {
-    return {
-      activeIndex: '1',
-      activeIndex2: '1'
-    }
-  },
   components: {
     basis,
     event,
@@ -41,16 +39,15 @@ export default {
     This,
     Es6,
     asynchronous,
-    asynchronousCode
-  },
-  methods: {
-    handleSelect (key, keyPath) {
-      console.log(key, keyPath)
-    }
+    asynchronousCode,
+    object1,
+    garbageCollection
   }
 }
 </script>
 
 <style lang="less" scoped>
-
+::v-deep(.el-tabs__item) {
+  padding: 0 15px;
+}
 </style>
