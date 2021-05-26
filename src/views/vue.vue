@@ -6,7 +6,6 @@
       <el-tab-pane label="组件通信" ><communication/></el-tab-pane>
       <el-tab-pane label="路由"><route/></el-tab-pane>
       <el-tab-pane label="vuex"><vuex/></el-tab-pane>
-      <el-tab-pane label="网络"><vuex/></el-tab-pane>
     </el-tabs>
   </div>
 </template>

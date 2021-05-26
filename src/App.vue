@@ -1,12 +1,12 @@
 <template>
   <div id="nav">
-    <router-link to="/">html</router-link> |
-    <router-link to="/css">css</router-link> |
-    <router-link to="/js">js</router-link> |
-    <router-link to="/vue">vue</router-link>|
-    <router-link to="/theInternet">网络</router-link>|
-    <router-link to="/browser">浏览器</router-link>|
-    <router-link to="/optimization">性能优化</router-link>
+    <keep-alive><router-link to="/">html</router-link></keep-alive>|
+    <keep-alive><router-link to="/css">css</router-link></keep-alive> |
+    <keep-alive><router-link to="/js">js</router-link></keep-alive> |
+    <keep-alive><router-link to="/vue">vue</router-link></keep-alive>|
+    <keep-alive><router-link to="/theInternet">网络</router-link></keep-alive>|
+    <keep-alive><router-link to="/browser">浏览器</router-link></keep-alive>|
+    <keep-alive><router-link to="/optimization">性能优化</router-link></keep-alive>
   </div>
   <div class="content">
     <router-view/>
@@ -39,7 +39,7 @@
 
 .content{
   border: 1px solid #EBEEF5;
-  width: 1000px;
+  max-width: 1000px;
   margin: 0 auto;
     .el-collapse-item__header{
       font-size: 18px;
